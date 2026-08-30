@@ -8,6 +8,8 @@ import {
   Upload,
   Loader2,
   CheckCircle2,
+  Brain,
+  Search,
 } from "lucide-react";
 
 const API_URL =
@@ -21,12 +23,28 @@ function App() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [activity, setActivity] = useState([]);
 
   const runAgent = async () => {
     if (!goal.trim()) return;
 
     setLoading(true);
     setAnswer("");
+
+    setActivity([
+      {
+        icon: "brain",
+        text: "Understanding your goal...",
+      },
+      {
+        icon: "search",
+        text: "Selecting the right tool...",
+      },
+      {
+        icon: "sparkle",
+        text: "Agent is working...",
+      },
+    ]);
 
     try {
       const response = await fetch(`${API_URL}/agent`, {
@@ -45,8 +63,30 @@ function App() {
         throw new Error(data.detail || "Request failed");
       }
 
+      setActivity([
+        {
+          icon: "brain",
+          text: "Goal understood",
+        },
+        {
+          icon: "search",
+          text: "Tool execution completed",
+        },
+        {
+          icon: "check",
+          text: "Answer generated successfully",
+        },
+      ]);
+
       setAnswer(data.result || "No response received.");
     } catch (error) {
+      setActivity([
+        {
+          icon: "brain",
+          text: "Agent encountered an error",
+        },
+      ]);
+
       setAnswer(`Error: ${error.message}`);
     } finally {
       setLoading(false);
@@ -91,6 +131,22 @@ function App() {
     }
   };
 
+  const ActivityIcon = ({ type }) => {
+    if (type === "brain") {
+      return <Brain size={15} />;
+    }
+
+    if (type === "search") {
+      return <Search size={15} />;
+    }
+
+    if (type === "check") {
+      return <CheckCircle2 size={15} />;
+    }
+
+    return <Sparkles size={15} />;
+  };
+
   return (
     <div className="app-shell">
       <div className="background-glow glow-one" />
@@ -132,10 +188,17 @@ function App() {
         </section>
 
         <section className="workspace">
+
+          {/* =========================
+              AGENT INPUT
+          ========================= */}
+
           <div className="input-card">
             <textarea
               value={goal}
-              onChange={(event) => setGoal(event.target.value)}
+              onChange={(event) =>
+                setGoal(event.target.value)
+              }
               onKeyDown={handleKeyDown}
               placeholder="What do you want me to research or solve?"
               rows={4}
@@ -162,7 +225,9 @@ function App() {
               <button
                 className="send-button"
                 onClick={runAgent}
-                disabled={loading || !goal.trim()}
+                disabled={
+                  loading || !goal.trim()
+                }
               >
                 {loading ? (
                   <Loader2
@@ -176,10 +241,64 @@ function App() {
             </div>
           </div>
 
+          {/* =========================
+              AGENT ACTIVITY
+          ========================= */}
+
+          {activity.length > 0 && (
+            <div className="activity-card">
+              <div className="activity-header">
+                <div className="activity-title">
+                  <div className="activity-avatar">
+                    <Brain size={16} />
+                  </div>
+
+                  <div>
+                    <strong>Agent Activity</strong>
+                    <span>
+                      {loading
+                        ? "Working..."
+                        : "Task completed"}
+                    </span>
+                  </div>
+                </div>
+
+                {loading && (
+                  <Loader2
+                    size={17}
+                    className="spin activity-loader"
+                  />
+                )}
+              </div>
+
+              <div className="activity-list">
+                {activity.map((item, index) => (
+                  <div
+                    className="activity-item"
+                    key={index}
+                  >
+                    <div className="activity-check">
+                      <ActivityIcon
+                        type={item.icon}
+                      />
+                    </div>
+
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* =========================
+              KNOWLEDGE BASE
+          ========================= */}
+
           <div className="document-card">
             <div className="document-header">
               <div>
                 <h2>Knowledge Base</h2>
+
                 <p>
                   Upload a PDF and ask the agent
                   questions about it.
@@ -210,7 +329,10 @@ function App() {
                 type="file"
                 accept=".pdf,application/pdf"
                 onChange={(event) => {
-                  setFile(event.target.files[0]);
+                  setFile(
+                    event.target.files[0]
+                  );
+
                   setUploadStatus("");
                 }}
               />
@@ -247,6 +369,10 @@ function App() {
             )}
           </div>
 
+          {/* =========================
+              ANSWER
+          ========================= */}
+
           {answer && (
             <div className="answer-card">
               <div className="answer-header">
@@ -256,8 +382,13 @@ function App() {
                   </div>
 
                   <div>
-                    <strong>AI Research Agent</strong>
-                    <span>Completed</span>
+                    <strong>
+                      AI Research Agent
+                    </strong>
+
+                    <span>
+                      Completed
+                    </span>
                   </div>
                 </div>
               </div>
@@ -278,3 +409,4 @@ function App() {
 }
 
 export default App;
+                
